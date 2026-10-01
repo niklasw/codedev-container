@@ -1,36 +1,40 @@
-// Windows variant (Docker Desktop or Podman Desktop, WSL2 backend).
-// Differs from ../devcontainer.json (Linux/podman) only in the host-specific bits:
-// no keep-id, no SELinux opt-out, no /dev/dri, no nvim config, no host Wayland socket.
+// Windows variant: Podman CLI inside a WSL2 distro (e.g. Ubuntu), VS Code
+// connected to WSL. Differs from ../devcontainer.json only in host-specific bits:
+// no SELinux opt-out, no /dev/dri, no nvim config, no host Wayland socket.
+// Docker Desktop instead of Podman: delete the --userns line.
 //
-// Build the image once:  docker build -t localhost/cppdev:latest -f Containerfile .
+// Build the image once, in WSL:  podman build -t codedev -f Containerfile .
 {
-  "name": "cppdev (Windows)",
-  "image": "localhost/cppdev:latest",
+  "name": "codedev (Windows)",
+  "image": "localhost/codedev:latest",
 
   "workspaceMount": "source=${localWorkspaceFolder},target=/work,type=bind",
   "workspaceFolder": "/work",
 
   "containerUser": "dev",
   "remoteUser": "dev",
+  // keep-id already maps the WSL user onto uid 1000
+  "updateRemoteUserUID": false,
 
   "runArgs": [
+    "--userns=keep-id:uid=1000,gid=1000",
     "--cap-add=SYS_PTRACE",
     "--init"
   ],
 
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/dev/.claude"
-    // Qt GUI via WSLg (Docker Desktop only; uncomment together with the mount below):
-    // , "WAYLAND_DISPLAY": "wayland-0",
-    //   "XDG_RUNTIME_DIR": "/mnt/wslg/runtime-dir",
+    // GUI apps via WSLg (untested; uncomment together with the mount below):
+    // , "XDG_RUNTIME_DIR": "/tmp/runtime",
+    //   "WAYLAND_DISPLAY": "wayland-0",
     //   "QT_QPA_PLATFORM": "wayland"
   },
 
   "mounts": [
-    "source=cppdev-vscode-server,target=/home/dev/.vscode-server,type=volume",
-    "source=cppdev-cache,target=/home/dev/.cache,type=volume",
-    "source=cppdev-claude,target=/home/dev/.claude,type=volume"
-    // , "source=/run/desktop/mnt/host/wslg,target=/mnt/wslg,type=bind"
+    "source=codedev-vscode-server,target=/home/dev/.vscode-server,type=volume",
+    "source=codedev-cache,target=/home/dev/.cache,type=volume",
+    "source=codedev-claude,target=/home/dev/.claude,type=volume"
+    // , "source=/mnt/wslg/runtime-dir/wayland-0,target=/tmp/runtime/wayland-0,type=bind"
   ],
 
   "customizations": {

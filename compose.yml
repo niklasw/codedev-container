@@ -1,20 +1,20 @@
 # Long-lived C++/Qt dev container.
 #
 #   PROJECT_DIR=~/src/myproj podman compose up -d --build
-#   podman exec -it cppdev nvim .
-#   VS Code: "Dev Containers: Attach to Running Container..." -> cppdev
+#   podman exec -it codedev nvim .
+#   VS Code: "Dev Containers: Attach to Running Container..." -> codedev
 #
 # Needs a Wayland session (XDG_RUNTIME_DIR and WAYLAND_DISPLAY set).
 
-name: cppdev
+name: codedev
 
 services:
   dev:
     build:
       context: .
       dockerfile: Containerfile
-    image: localhost/cppdev:latest
-    container_name: cppdev
+    image: localhost/codedev:latest
+    container_name: codedev
     init: true
 
     # Map the host user onto the image's uid 1000 ("dev"), whatever the host uid is.
@@ -55,12 +55,12 @@ services:
 # Fixed names (no project prefix), shared with .devcontainer/devcontainer.json.
 volumes:
   nvim-data:
-    name: cppdev-nvim-data
+    name: codedev-nvim-data
   nvim-state:
-    name: cppdev-nvim-state
+    name: codedev-nvim-state
   vscode-server:
-    name: cppdev-vscode-server
+    name: codedev-vscode-server
   cache:
-    name: cppdev-cache
+    name: codedev-cache
   claude:
-    name: cppdev-claude
+    name: codedev-claude

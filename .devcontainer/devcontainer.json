@@ -1,13 +1,13 @@
 // Same container as compose.yml, in Dev Containers form.
-// Template: copy .devcontainer/ into any C++/Qt project. It uses the shared
-// image, so build that once first:  podman compose build  (or podman build -t cppdev .)
+// Linux variant. Copy to <project>/.devcontainer/devcontainer.json. It uses a shared
+// image, so build that once first:  podman compose build  (or podman build -t codedev .)
 //
 // VS Code:  settings "dev.containers.dockerPath": "podman", then "Reopen in Container"
 // nvim:     devcontainer up   --docker-path podman --workspace-folder .
 //           devcontainer exec --docker-path podman --workspace-folder . nvim .
 {
-  "name": "cppdev",
-  "image": "localhost/cppdev:latest",
+  "name": "codedev",
+  "image": "localhost/codedev:latest",
 
   "workspaceMount": "source=${localWorkspaceFolder},target=/work,type=bind",
   "workspaceFolder": "/work",
@@ -37,11 +37,11 @@
   // Volume names match compose.yml, so both ways share plugins and the VS Code server.
   "mounts": [
     "source=${localEnv:HOME}/.config/nvim,target=/home/dev/.config/nvim,type=bind,readonly",
-    "source=cppdev-nvim-data,target=/home/dev/.local/share/nvim,type=volume",
-    "source=cppdev-nvim-state,target=/home/dev/.local/state/nvim,type=volume",
-    "source=cppdev-vscode-server,target=/home/dev/.vscode-server,type=volume",
-    "source=cppdev-cache,target=/home/dev/.cache,type=volume",
-    "source=cppdev-claude,target=/home/dev/.claude,type=volume",
+    "source=codedev-nvim-data,target=/home/dev/.local/share/nvim,type=volume",
+    "source=codedev-nvim-state,target=/home/dev/.local/state/nvim,type=volume",
+    "source=codedev-vscode-server,target=/home/dev/.vscode-server,type=volume",
+    "source=codedev-cache,target=/home/dev/.cache,type=volume",
+    "source=codedev-claude,target=/home/dev/.claude,type=volume",
     "source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY:wayland-0},target=/tmp/runtime/${localEnv:WAYLAND_DISPLAY:wayland-0},type=bind"
   ],
 
