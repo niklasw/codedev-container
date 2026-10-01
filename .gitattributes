@@ -1,0 +1,2 @@
+# Keep LF line endings on Windows checkouts too; CRLF breaks scripts in the container.
+* text=auto eol=lf
