@@ -1,0 +1,67 @@
+// Same container as compose.yml, in Dev Containers form.
+// Template: copy .devcontainer/ into any C++/Qt project. It uses the shared
+// image, so build that once first:  podman compose build  (or podman build -t cppdev .)
+//
+// VS Code:  settings "dev.containers.dockerPath": "podman", then "Reopen in Container"
+// nvim:     devcontainer up   --docker-path podman --workspace-folder .
+//           devcontainer exec --docker-path podman --workspace-folder . nvim .
+{
+  "name": "cppdev",
+  "image": "localhost/cppdev:latest",
+
+  "workspaceMount": "source=${localWorkspaceFolder},target=/work,type=bind",
+  "workspaceFolder": "/work",
+
+  "containerUser": "dev",
+  "remoteUser": "dev",
+  // keep-id already maps the host user onto uid 1000; don't let VS Code
+  // rebuild the image to change dev's uid, or the two would fight.
+  "updateRemoteUserUID": false,
+
+  "runArgs": [
+    "--userns=keep-id:uid=1000,gid=1000",
+    "--security-opt=label=disable",
+    "--cap-add=SYS_PTRACE",
+    "--device=/dev/dri",
+    "--init"
+  ],
+
+  "containerEnv": {
+    "XDG_RUNTIME_DIR": "/tmp/runtime",
+    "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY:wayland-0}",
+    "QT_QPA_PLATFORM": "wayland",
+    // All Claude Code state (login, settings, history) in one directory, on a volume
+    "CLAUDE_CONFIG_DIR": "/home/dev/.claude"
+  },
+
+  // Volume names match compose.yml, so both ways share plugins and the VS Code server.
+  "mounts": [
+    "source=${localEnv:HOME}/.config/nvim,target=/home/dev/.config/nvim,type=bind,readonly",
+    "source=cppdev-nvim-data,target=/home/dev/.local/share/nvim,type=volume",
+    "source=cppdev-nvim-state,target=/home/dev/.local/state/nvim,type=volume",
+    "source=cppdev-vscode-server,target=/home/dev/.vscode-server,type=volume",
+    "source=cppdev-cache,target=/home/dev/.cache,type=volume",
+    "source=cppdev-claude,target=/home/dev/.claude,type=volume",
+    "source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY:wayland-0},target=/tmp/runtime/${localEnv:WAYLAND_DISPLAY:wayland-0},type=bind"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",  // gdb debugging only
+        "anthropic.claude-code"
+      ],
+      "settings": {
+        "clangd.path": "/usr/bin/clangd",
+        "cmake.generator": "Ninja",
+        "cmake.configureSettings": {
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        },
+        // cpptools' IntelliSense would duplicate clangd
+        "C_Cpp.intelliSenseEngine": "disabled"
+      }
+    }
+  }
+}

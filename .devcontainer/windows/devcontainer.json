@@ -1,0 +1,54 @@
+// Windows variant (Docker Desktop or Podman Desktop, WSL2 backend).
+// Differs from ../devcontainer.json (Linux/podman) only in the host-specific bits:
+// no keep-id, no SELinux opt-out, no /dev/dri, no nvim config, no host Wayland socket.
+//
+// Build the image once:  docker build -t localhost/cppdev:latest -f Containerfile .
+{
+  "name": "cppdev (Windows)",
+  "image": "localhost/cppdev:latest",
+
+  "workspaceMount": "source=${localWorkspaceFolder},target=/work,type=bind",
+  "workspaceFolder": "/work",
+
+  "containerUser": "dev",
+  "remoteUser": "dev",
+
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--init"
+  ],
+
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/dev/.claude"
+    // Qt GUI via WSLg (Docker Desktop only; uncomment together with the mount below):
+    // , "WAYLAND_DISPLAY": "wayland-0",
+    //   "XDG_RUNTIME_DIR": "/mnt/wslg/runtime-dir",
+    //   "QT_QPA_PLATFORM": "wayland"
+  },
+
+  "mounts": [
+    "source=cppdev-vscode-server,target=/home/dev/.vscode-server,type=volume",
+    "source=cppdev-cache,target=/home/dev/.cache,type=volume",
+    "source=cppdev-claude,target=/home/dev/.claude,type=volume"
+    // , "source=/run/desktop/mnt/host/wslg,target=/mnt/wslg,type=bind"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",  // gdb debugging only
+        "anthropic.claude-code"
+      ],
+      "settings": {
+        "clangd.path": "/usr/bin/clangd",
+        "cmake.generator": "Ninja",
+        "cmake.configureSettings": {
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        },
+        "C_Cpp.intelliSenseEngine": "disabled"
+      }
+    }
+  }
+}

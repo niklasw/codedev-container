@@ -1,0 +1,66 @@
+# Long-lived C++/Qt dev container.
+#
+#   PROJECT_DIR=~/src/myproj podman compose up -d --build
+#   podman exec -it cppdev nvim .
+#   VS Code: "Dev Containers: Attach to Running Container..." -> cppdev
+#
+# Needs a Wayland session (XDG_RUNTIME_DIR and WAYLAND_DISPLAY set).
+
+name: cppdev
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: localhost/cppdev:latest
+    container_name: cppdev
+    init: true
+
+    # Map the host user onto the image's uid 1000 ("dev"), whatever the host uid is.
+    userns_mode: "keep-id:uid=1000,gid=1000"
+    user: dev
+
+    # SELinux would block the bind mounts; don't use :Z on home directories.
+    security_opt:
+      - label=disable
+    # gdb attach
+    cap_add:
+      - SYS_PTRACE
+    # GPU for Qt/OpenGL
+    devices:
+      - /dev/dri
+
+    environment:
+      XDG_RUNTIME_DIR: /tmp/runtime
+      WAYLAND_DISPLAY: ${WAYLAND_DISPLAY:-wayland-0}
+      QT_QPA_PLATFORM: wayland
+      CLAUDE_CONFIG_DIR: /home/dev/.claude
+      TERM: ${TERM:-xterm-256color}
+
+    volumes:
+      - ${PROJECT_DIR:-.}:/work
+      # Edit the nvim config on the host; plugins/parsers get built in-container.
+      - ${HOME}/.config/nvim:/home/dev/.config/nvim:ro
+      - nvim-data:/home/dev/.local/share/nvim
+      - nvim-state:/home/dev/.local/state/nvim
+      - vscode-server:/home/dev/.vscode-server
+      - cache:/home/dev/.cache
+      - claude:/home/dev/.claude
+      # Wayland socket, so Qt apps show up on the host desktop.
+      - ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}:/tmp/runtime/${WAYLAND_DISPLAY:-wayland-0}
+      # Optional: git identity
+      - ${HOME}/.gitconfig:/home/dev/.gitconfig:ro
+
+# Fixed names (no project prefix), shared with .devcontainer/devcontainer.json.
+volumes:
+  nvim-data:
+    name: cppdev-nvim-data
+  nvim-state:
+    name: cppdev-nvim-state
+  vscode-server:
+    name: cppdev-vscode-server
+  cache:
+    name: cppdev-cache
+  claude:
+    name: cppdev-claude
