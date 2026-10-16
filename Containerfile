@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git curl ca-certificates ripgrep fd-find unzip locales \
         python3 python3-pip python3-venv \
         lua5.1 liblua5.1-0-dev luarocks \
+        universal-ctags \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/fdfind /usr/local/bin/fd \
     && locale-gen en_US.UTF-8
@@ -27,6 +28,10 @@ RUN usermod -l dev -d /home/dev -m ubuntu \
 RUN curl -fsSL https://claude.ai/install.sh | HOME=/opt/claude bash \
     && chmod -R a+rX /opt/claude
 ENV PATH="/opt/claude/.local/bin:${PATH}"
+
+# uv (Python package manager), into /usr/local/bin so dev can use it too.
+RUN curl -LsSf https://astral.sh/uv/install.sh \
+      | env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh
 
 # Mount points must exist and be owned by dev: podman copies the image's
 # ownership into a named volume on first use, otherwise they end up root-owned.
