@@ -5,7 +5,7 @@ FROM docker.io/library/ubuntu:24.04
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential cmake ninja-build gdb clangd clang-format \
-        git curl ca-certificates ripgrep fd-find unzip locales \
+        git openssh-client curl ca-certificates ripgrep fd-find unzip locales \
         python3 python3-pip python3-venv \
         lua5.1 liblua5.1-0-dev luarocks \
         universal-ctags \
