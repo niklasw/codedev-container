@@ -41,6 +41,27 @@ In the config, set `"image"` to the name you build your image under (here
 `localhost/codedev:latest`, which is what `podman build -t codedev` produces).
 Copy `.gitattributes` too, at least if anyone works from Windows.
 
+### ssh keys for git
+
+To let git push over ssh from inside the container, make a folder on the host
+with only the keys the container should have (for example a GitHub key just
+for this), plus a `config` and `known_hosts` if you use them:
+
+```sh
+mkdir -m 700 ~/.ssh-codedev
+cp ~/.ssh/id_ed25519_github* ~/.ssh/known_hosts ~/.ssh-codedev/
+```
+
+Then point `CODEDEV_SSH_DIR` at it, in `~/.bashrc` or similar, *before*
+starting VS Code or compose (on Windows: in the Ubuntu shell's `~/.bashrc`):
+
+```sh
+export CODEDEV_SSH_DIR=~/.ssh-codedev
+```
+
+The folder is mounted read-only at `/home/dev/.ssh`. Check from inside the
+container with `ssh -T git@github.com`.
+
 ## Quick start: Windows
 
 The code, Podman and the containers all live inside WSL2; VS Code runs on
@@ -54,7 +75,8 @@ You need:
 
 Steps:
 
-1. **Install Podman in WSL.** In the Ubuntu shell:
+1. **Install Podman in WSL** and set up
+   [ssh keys for git](#ssh-keys-for-git). In the Ubuntu shell:
 
    ```sh
    sudo apt update && sudo apt install -y podman
@@ -95,8 +117,10 @@ Windows config has commented-out lines to try it.
    **Dev › Containers: Docker Path** to `podman`. (In the file, that is
    `"dev.containers.dockerPath": "podman"` in
    `~/.config/Code/User/settings.json`.)
-3. Build the image: `podman build -t codedev -f Containerfile .`
-4. Open the project (`code ~/src/myproj`) and run
+3. Set up [ssh keys for git](#ssh-keys-for-git), and create
+   `~/.config/nvim-containers` (see [Without VS Code](#without-vs-code-nvim)).
+4. Build the image: `podman build -t codedev -f Containerfile .`
+5. Open the project (`code ~/src/myproj`) and run
    **Dev Containers: Reopen in Container**.
 
 The Linux config also passes through the Wayland socket and GPU, so GUI
@@ -110,8 +134,11 @@ PROJECT_DIR=~/src/myproj podman compose up -d --build
 podman exec -it codedev nvim .
 ```
 
-Your `~/.config/nvim` is mounted read-only; plugins and LSP servers install
-into a volume and are built against the container's libraries. The
+The container uses its own nvim config, `~/.config/nvim-containers` on the
+host (start with a copy of `~/.config/nvim`). It is writable, so lazy.nvim
+can update its lock file; plugins and LSP servers install into a volume and
+are built against the container's libraries. The VS Code config mounts it
+too, so the folder must exist even if you don't use nvim. The
 [devcontainer CLI](https://github.com/devcontainers/cli) works too:
 
 ```sh
@@ -148,7 +175,9 @@ These work with the same configs, with small changes:
   it doesn't fight clangd).
 - **Claude Code**: the extension (`anthropic.claude-code`) is installed in the
   container automatically and runs there. `claude` also works in the
-  terminal. Log in once; the login is kept in a volume.
+  terminal. On Linux the container uses your host's `~/.claude`, so you
+  share login, settings and history with Claude Code on the host. On Windows
+  they are kept in the `codedev-claude` volume; log in once.
 - **Changed the Containerfile?** Rebuild the image first
   (`podman build -t codedev -f Containerfile .`), *then* run
   **Dev Containers: Rebuild Container**. VS Code's rebuild only recreates the
@@ -163,11 +192,13 @@ rebuilds and shared between projects:
 | Volume | Holds |
 | --- | --- |
 | `codedev-vscode-server` | VS Code's server and extensions in the container |
-| `codedev-claude` | Claude Code login, settings and history (`CLAUDE_CONFIG_DIR`) |
+| `codedev-claude` | Claude Code login, settings and history (Windows only; Linux uses the host's `~/.claude`) |
 | `codedev-cache` | `~/.cache` (tool caches) |
 | `codedev-nvim-data`, `codedev-nvim-state` | nvim plugins and state (Linux only) |
 
-Your source in `/work` is the host folder itself, so it is never lost.
+Your source in `/work` is the host folder itself, so it is never lost. The
+same goes for the other host folders that are mounted: `~/.claude` (Linux),
+`~/.config/nvim-containers` and `$CODEDEV_SSH_DIR`.
 
 To start from scratch: `podman volume rm codedev-claude` (and so on).
 
@@ -187,7 +218,7 @@ Install whatever your project needs, but keep these parts, which the
    RUN mkdir -p /home/dev/.vscode-server /home/dev/.cache /home/dev/.claude \
                 /home/dev/.config/nvim /home/dev/.local/share/nvim \
                 /home/dev/.local/state/nvim \
-       && mkdir -m 700 /tmp/runtime
+       && mkdir -m 700 /home/dev/.ssh /tmp/runtime
    ```
 
    A named volume takes its ownership from the image the first time it is
@@ -222,10 +253,11 @@ especially when letting Claude Code work on its own:
   it from outside: `podman exec -u root -it <container> bash`. Better: add
   the package to the Containerfile.
 - **What `dev` can reach**: everything in `/work` (including `.git`), the
-  Claude login, and the network. If you pass git credentials or an ssh agent
-  into the container, Claude can push with them.
-- Read-only mounts (`~/.config/nvim`, `~/.gitconfig` in compose) can't be
-  changed from inside.
+  Claude login (on Linux: your host's whole `~/.claude`), the ssh keys in
+  `$CODEDEV_SSH_DIR`, and the network. Claude can push with those keys, which
+  is why the folder should hold only keys meant for the container.
+- Read-only mounts (`$CODEDEV_SSH_DIR`, `~/.gitconfig` in compose) can't be
+  changed from inside. `~/.config/nvim-containers` and `~/.claude` can.
 
 ## Troubleshooting
 
@@ -243,3 +275,9 @@ especially when letting Claude Code work on its own:
   rebuild.
 - **`~/.gitconfig` mount fails (Linux compose)**: the file must exist on the
   host. Create it or remove that line from `compose.yml`.
+- **A mount fails with an empty or missing source**: `CODEDEV_SSH_DIR` isn't
+  set where VS Code or compose was started, or `~/.claude` /
+  `~/.config/nvim-containers` doesn't exist on the host. VS Code only sees
+  variables that were set when it started; restart it after changing them.
+- **`ssh` warns it can't add a host to `known_hosts`**: the ssh folder is
+  read-only. Add the host to `known_hosts` on the host side.

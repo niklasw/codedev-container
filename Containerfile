@@ -42,7 +42,7 @@ RUN mkdir -p /home/dev/.config/nvim \
              /home/dev/.vscode-server \
              /home/dev/.cache \
              /home/dev/.claude \
-    && mkdir -m 700 /tmp/runtime
+    && mkdir -m 700 /home/dev/.ssh /tmp/runtime
 
 ENV LANG=en_US.UTF-8
 WORKDIR /work

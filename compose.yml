@@ -1,5 +1,6 @@
 # Long-lived C++/Qt dev container.
 #
+#   export CODEDEV_SSH_DIR=~/.ssh-codedev   # ssh keys/config for git, see README
 #   PROJECT_DIR=~/src/myproj podman compose up -d --build
 #   podman exec -it codedev nvim .
 #   VS Code: "Dev Containers: Attach to Running Container..." -> codedev
@@ -40,13 +41,17 @@ services:
 
     volumes:
       - ${PROJECT_DIR:-.}:/work
-      # Edit the nvim config on the host; plugins/parsers get built in-container.
-      - ${HOME}/.config/nvim:/home/dev/.config/nvim:ro
+      # A separate nvim config for containers, writable so lazy.nvim can update
+      # its lock file; plugins/parsers get built in-container.
+      - ${HOME}/.config/nvim-containers:/home/dev/.config/nvim
       - nvim-data:/home/dev/.local/share/nvim
       - nvim-state:/home/dev/.local/state/nvim
       - vscode-server:/home/dev/.vscode-server
       - cache:/home/dev/.cache
-      - claude:/home/dev/.claude
+      # Same Claude Code login and settings as on the host.
+      - ${HOME}/.claude:/home/dev/.claude
+      # Only the keys meant for the container, not the whole ~/.ssh.
+      - ${CODEDEV_SSH_DIR:?set CODEDEV_SSH_DIR to a folder with ssh keys for the container}:/home/dev/.ssh:ro
       # Wayland socket, so Qt apps show up on the host desktop.
       - ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}:/tmp/runtime/${WAYLAND_DISPLAY:-wayland-0}
       # Optional: git identity
@@ -62,5 +67,3 @@ volumes:
     name: codedev-vscode-server
   cache:
     name: codedev-cache
-  claude:
-    name: codedev-claude

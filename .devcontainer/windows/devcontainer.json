@@ -33,7 +33,10 @@
   "mounts": [
     "source=codedev-vscode-server,target=/home/dev/.vscode-server,type=volume",
     "source=codedev-cache,target=/home/dev/.cache,type=volume",
-    "source=codedev-claude,target=/home/dev/.claude,type=volume"
+    // A volume: a Windows-side Claude login isn't in WSL's home to share
+    "source=codedev-claude,target=/home/dev/.claude,type=volume",
+    // ssh keys for git, a folder inside WSL (see README)
+    "source=${localEnv:CODEDEV_SSH_DIR},target=/home/dev/.ssh,type=bind,readonly"
     // , "source=/mnt/wslg/runtime-dir/wayland-0,target=/tmp/runtime/wayland-0,type=bind"
   ],
 

@@ -15,6 +15,10 @@ needs the others:
 - `.devcontainer/windows/devcontainer.json` (Windows/WSL2; no SELinux opt-out,
   no `/dev/dri`, no nvim mounts, no Wayland socket)
 
+The duplication is deliberate: the Linux `devcontainer.json` stays image-based
+(not `dockerComposeFile`), because that is the standard VS Code setup that
+people we share this with will find documented elsewhere.
+
 Volume names are fixed (`codedev-*`) and shared between compose and the
 devcontainer files. Every mount target must also be created as `dev` in the
 `Containerfile` (after `USER dev`), or podman creates the volume root-owned.

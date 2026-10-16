@@ -30,18 +30,20 @@
     "XDG_RUNTIME_DIR": "/tmp/runtime",
     "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY:wayland-0}",
     "QT_QPA_PLATFORM": "wayland",
-    // All Claude Code state (login, settings, history) in one directory, on a volume
+    // All Claude Code state (login, settings, history) in one directory
     "CLAUDE_CONFIG_DIR": "/home/dev/.claude"
   },
 
   // Volume names match compose.yml, so both ways share plugins and the VS Code server.
   "mounts": [
-    "source=${localEnv:HOME}/.config/nvim,target=/home/dev/.config/nvim,type=bind,readonly",
+    "source=${localEnv:HOME}/.config/nvim-containers,target=/home/dev/.config/nvim,type=bind",
     "source=codedev-nvim-data,target=/home/dev/.local/share/nvim,type=volume",
     "source=codedev-nvim-state,target=/home/dev/.local/state/nvim,type=volume",
     "source=codedev-vscode-server,target=/home/dev/.vscode-server,type=volume",
     "source=codedev-cache,target=/home/dev/.cache,type=volume",
-    "source=codedev-claude,target=/home/dev/.claude,type=volume",
+    // Host's ~/.claude, and only the ssh keys meant for the container
+    "source=${localEnv:HOME}/.claude,target=/home/dev/.claude,type=bind",
+    "source=${localEnv:CODEDEV_SSH_DIR},target=/home/dev/.ssh,type=bind,readonly",
     "source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY:wayland-0},target=/tmp/runtime/${localEnv:WAYLAND_DISPLAY:wayland-0},type=bind"
   ],
 
