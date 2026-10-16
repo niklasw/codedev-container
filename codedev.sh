@@ -11,6 +11,10 @@
 _codedev_compose="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/compose.yml"
 
 codedev() {
+    if [[ "$PWD" == "$HOME" ]]; then
+        echo -e "Do not run this in your home folder"
+        return 1
+    fi
     local name
     # Compose project names must be lowercase letters, digits, - and _.
     name=codedev-$(basename "$PWD" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9_\n-' '-')
