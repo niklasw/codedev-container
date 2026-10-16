@@ -2,8 +2,8 @@
 
 Example dev-container setup (Podman first, Docker as an alternative) for C/C++
 work in VS Code and nvim. There is no application code: the deliverables are
-`Containerfile`, `compose.yml`, the two `devcontainer.json` files and
-`README.md`, which is the user-facing documentation.
+`Containerfile`, `compose.yml` (plus `codedev.sh`, which drives it), the two
+`devcontainer.json` files and `README.md`, which is the user-facing documentation.
 
 ## Keep the configs in sync
 

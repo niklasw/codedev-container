@@ -21,6 +21,7 @@ Desktop apps work too, see [Alternatives](#alternatives-podman-desktop-docker).
 | `.devcontainer/devcontainer.json` | VS Code config for **Linux** hosts. |
 | `.devcontainer/windows/devcontainer.json` | VS Code config for **Windows** hosts (Podman inside WSL2). |
 | `compose.yml` | Linux only, optional: a long-lived container without VS Code (used for nvim). |
+| `codedev.sh` | Linux only, optional: a `codedev` shell command that starts one compose container per project. |
 | `.gitattributes` | Forces LF line endings, also on Windows checkouts. |
 
 ## Using it in your project
@@ -128,6 +129,36 @@ applications you build (with `qt6-wayland` etc. in your image) open as
 normal windows on your desktop.
 
 ### Without VS Code (nvim)
+
+Load the `codedev` command once, in `~/.bashrc` or `~/.zshrc` (use the path
+where you cloned this repo):
+
+```sh
+source ~/src/codedev-container/codedev.sh
+```
+
+Then, from any project folder:
+
+```sh
+cd ~/src/myproj
+codedev            # nvim in the container
+codedev bash       # or any other command, in the same container
+codedev down       # stop and remove this folder's container
+```
+
+Each project folder gets its own container, `codedev-myproj`, with that
+folder at `/work`. The first `codedev` creates it; later ones reuse it.
+If `CODEDEV_SSH_DIR` isn't set, it asks for the folder (default
+`~/.ssh-codedev`) once per shell.
+All of them share the image and the `codedev-*` volumes, so nvim plugins are
+installed only once. Two folders with the same name (for example two
+`~/a/app` and `~/b/app`) would share a container; rename one.
+
+After rebuilding the image, remove the old containers so the next `codedev`
+creates them from the new image: `codedev down` in each project folder, or
+`podman rm -f codedev-myproj` (`podman ps -a` lists them).
+
+Without the script, by hand:
 
 ```sh
 PROJECT_DIR=~/src/myproj podman compose up -d --build

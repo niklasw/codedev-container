@@ -1,6 +1,9 @@
 # Long-lived C++/Qt dev container.
 #
 #   export CODEDEV_SSH_DIR=~/.ssh-codedev   # ssh keys/config for git, see README
+#   source codedev.sh; cd ~/src/myproj; codedev   # one container per project
+#
+# or by hand:
 #   PROJECT_DIR=~/src/myproj podman compose up -d --build
 #   podman exec -it codedev nvim .
 #   VS Code: "Dev Containers: Attach to Running Container..." -> codedev
@@ -15,7 +18,8 @@ services:
       context: .
       dockerfile: Containerfile
     image: localhost/codedev:latest
-    container_name: codedev
+    # codedev.sh sets this per project folder.
+    container_name: ${CODEDEV_NAME:-codedev}
     init: true
 
     # Map the host user onto the image's uid 1000 ("dev"), whatever the host uid is.
