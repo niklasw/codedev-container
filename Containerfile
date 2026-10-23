@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git openssh-client curl ca-certificates ripgrep fd-find unzip locales \
         python3 python3-pip python3-venv \
         lua5.1 liblua5.1-0-dev luarocks \
-        universal-ctags \
+        universal-ctags  nodejs npm bat \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/fdfind /usr/local/bin/fd \
     && locale-gen en_US.UTF-8
